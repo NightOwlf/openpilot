@@ -51,11 +51,32 @@ class LaneChangeSettingsLayout(Widget):
       description=lambda: tr("Toggle to enable a delay timer for seamless lane changes when blind spot monitoring " +
                              "(BSM) detects a obstructing vehicle, ensuring safe maneuvering."),
     )
+    # Automatic passing ("Auto Lane Positioning"). Only Off/Assist are surfaced for now:
+    # Assist detects a passing opportunity and prompts; the driver still executes the pass
+    # with the turn signal. The "Auto" self-initiating mode (value 2) is exposed once its
+    # execution path lands and has been validated on real logs.
+    self._auto_lane_positioning = option_item_sp(
+      title=lambda: tr("Automatic Passing (Assist)"),
+      param="AutoLanePositioning",
+      description=lambda: tr("On the highway, when a slower vehicle ahead is holding you up and the passing lane " +
+                             "looks clear, sunnypilot suggests a pass. Assist surfaces a prompt only — you " +
+                             "execute the pass with your turn signal, just like a normal lane change.<br>" +
+                             "Highway speeds only. Works best with blind spot monitoring. Always stay attentive " +
+                             "and check your mirrors before changing lanes."),
+      min_value=0,
+      max_value=1,
+      value_change_step=1,
+      label_callback=(lambda x:
+                      tr("Off") if x == 0 else
+                      tr("Assist")),
+    )
 
     items = [
       self._lane_change_timer,
       LineSeparatorSP(40),
       self._bsm_delay,
+      LineSeparatorSP(40),
+      self._auto_lane_positioning,
     ]
 
     return items

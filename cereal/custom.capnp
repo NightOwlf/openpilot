@@ -194,6 +194,7 @@ struct LongitudinalPlanSP @0xf35cc4560bbf6ec2 {
   aTarget @5 :Float32;
   events @6 :List(OnroadEventSP.Event);
   e2eAlerts @7 :E2eAlerts;
+  navTurn @8 :NavTurn;
 
   struct DynamicExperimentalControl {
     state @0 :DynamicExperimentalControlState;
@@ -290,11 +291,30 @@ struct LongitudinalPlanSP @0xf35cc4560bbf6ec2 {
     sccVision @1;
     sccMap @2;
     speedLimitAssist @3;
+    navTurn @4;
   }
 
   struct E2eAlerts {
     greenLightAlert @0 :Bool;
     leadDepartAlert @1 :Bool;
+  }
+
+  # Navigation-driven slowdown for an upcoming route maneuver (turn/exit/roundabout).
+  struct NavTurn {
+    state @0 :NavTurnState;
+    vTarget @1 :Float32;         # m/s speed we should be at now to take the maneuver comfortably
+    aTarget @2 :Float32;
+    enabled @3 :Bool;
+    active @4 :Bool;             # actively limiting speed for the maneuver
+    maneuverDistance @5 :Float32;  # m to the maneuver
+    targetSpeed @6 :Float32;     # m/s target speed at the maneuver itself
+
+    enum NavTurnState {
+      disabled @0;   # off or no route
+      enabled @1;    # route active, no maneuver requiring slowdown in range
+      slowing @2;    # decelerating for an upcoming maneuver
+      overriding @3; # driver override
+    }
   }
 }
 
@@ -342,6 +362,8 @@ struct OnroadEventSP @0xda96579883444c35 {
     speedLimitChanged @21;
     speedLimitPending @22;
     e2eChime @23;
+    autoLanePositioningPromptLeft @24;
+    autoLanePositioningPromptRight @25;
   }
 }
 
@@ -448,18 +470,88 @@ struct LiveMapDataSP @0xf416ec09499d9d19 {
 
 struct ModelDataV2SP @0xa1680744031fdb2d {
   laneTurnDirection @0 :TurnDirection;
+  autoLanePositioning @1 :AutoLanePositioning;
 
   enum TurnDirection {
     none @0;
     turnLeft @1;
     turnRight @2;
   }
+
+  # Auto Lane Positioning ("automatic passing") advisory output.
+  # In ASSIST mode this is a suggestion only; execution stays with the driver.
+  struct AutoLanePositioning {
+    active @0 :Bool;                # true when a pass is being suggested
+    direction @1 :Direction;        # suggested side to move to
+    reason @2 :UInt16;              # ALPReason code (why active / why suppressed)
+    candidate @3 :Bool;             # instantaneous qualification, pre-debounce
+    cooldownRemaining @4 :Float32;  # s until suggestions are allowed again
+
+    enum Direction {
+      none @0;
+      left @1;
+      right @2;
+    }
+  }
 }
 
-struct CustomReserved10 @0xcb9fd56c7057593a {
+# Turn-by-turn navigation instruction for the current route (sunnypilot navd).
+# Modeled on openpilot's (now deprecated) NavInstruction; kept as an SP message so
+# the fork owns the schema. Populated by sunnypilot/navd/navd.py from a Mapbox route.
+struct NavInstructionSP @0xcb9fd56c7057593a {
+  maneuverPrimaryText @0 :Text;
+  maneuverSecondaryText @1 :Text;
+  maneuverDistance @2 :Float32;   # m to the next maneuver
+  maneuverType @3 :Text;
+  maneuverModifier @4 :Text;
+
+  distanceRemaining @5 :Float32;  # m to destination
+  timeRemaining @6 :Float32;      # s to destination
+  timeRemainingTypical @7 :Float32;  # s, without live traffic
+
+  lanes @8 :List(Lane);
+  showFull @9 :Bool;              # close enough to show the full maneuver card
+
+  speedLimit @10 :Float32;        # m/s, from the route (0 = unknown)
+  speedLimitSign @11 :SpeedLimitSign;
+
+  allManeuvers @12 :List(Maneuver);
+
+  struct Lane {
+    directions @0 :List(Direction);
+    active @1 :Bool;
+    activeDirection @2 :Direction;
+  }
+
+  enum Direction {
+    none @0;
+    left @1;
+    right @2;
+    straight @3;
+    slightLeft @4;
+    slightRight @5;
+  }
+
+  enum SpeedLimitSign {
+    mutcd @0;   # US style
+    vienna @1;  # EU style
+  }
+
+  struct Maneuver {
+    distance @0 :Float32;
+    type @1 :Text;
+    modifier @2 :Text;
+  }
 }
 
-struct CustomReserved11 @0xc2243c65e0340384 {
+# The active route geometry (list of coordinates), for drawing the route line.
+struct NavRouteSP @0xc2243c65e0340384 {
+  coordinates @0 :List(Coordinate);
+
+  struct Coordinate {
+    latitude @0 :Float32;
+    longitude @1 :Float32;
+  }
 }
 
 struct CustomReserved12 @0x9ccdc8676701b412 {

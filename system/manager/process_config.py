@@ -180,6 +180,9 @@ procs += [
   NativeProcess("mapd", Paths.mapd_root(), ["bash", "-c", f"{MAPD_PATH} > /dev/null 2>&1"], mapd_ready),
   PythonProcess("mapd_manager", "sunnypilot.mapd.mapd_manager", always_run),
 
+  # navd (turn-by-turn navigation). Idles when no destination/Mapbox token is set.
+  PythonProcess("navd", "sunnypilot.navd.navd", only_onroad),
+
   # locationd
   NativeProcess("locationd_llk", "sunnypilot/selfdrive/locationd", ["./locationd"], only_onroad),
 ]

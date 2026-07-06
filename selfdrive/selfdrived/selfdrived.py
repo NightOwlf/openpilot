@@ -48,6 +48,7 @@ SafetyModel = car.CarParams.SafetyModel
 AlertLevel = log.DriverMonitoringState.AlertLevel
 MonitoringPolicy = log.DriverMonitoringState.MonitoringPolicy
 TurnDirection = custom.ModelDataV2SP.TurnDirection
+AutoPassDirection = custom.ModelDataV2SP.AutoLanePositioning.Direction
 
 IGNORED_SAFETY_MODES = (SafetyModel.silent, SafetyModel.noOutput)
 
@@ -339,6 +340,15 @@ class SelfdriveD(CruiseHelper):
       self.events_sp.add(custom.OnroadEventSP.EventName.laneTurnLeft)
     elif lane_turn_direction == TurnDirection.turnRight:
       self.events_sp.add(custom.OnroadEventSP.EventName.laneTurnRight)
+
+    # Handle automatic passing (Auto Lane Positioning) suggestion -- ASSIST mode.
+    # Advisory prompt + soft chime only; the driver executes the pass.
+    auto_lane_positioning = self.sm['modelDataV2SP'].autoLanePositioning
+    if auto_lane_positioning.active:
+      if auto_lane_positioning.direction == AutoPassDirection.left:
+        self.events_sp.add(custom.OnroadEventSP.EventName.autoLanePositioningPromptLeft)
+      elif auto_lane_positioning.direction == AutoPassDirection.right:
+        self.events_sp.add(custom.OnroadEventSP.EventName.autoLanePositioningPromptRight)
 
     for i, pandaState in enumerate(self.sm['pandaStates']):
       # All pandas must match the list of safetyConfigs, and if outside this list, must be silent or noOutput
