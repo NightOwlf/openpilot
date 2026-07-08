@@ -3,8 +3,6 @@ from openpilot.common.constants import CV
 from openpilot.common.realtime import DT_MDL
 from openpilot.sunnypilot.selfdrive.controls.lib.auto_lane_change import AutoLaneChangeController, AutoLaneChangeMode
 from openpilot.sunnypilot.selfdrive.controls.lib.lane_turn_desire import LaneTurnController
-from openpilot.sunnypilot.selfdrive.controls.lib.auto_lane_positioning.auto_lane_positioning import \
-  AutoLanePositioningController, ALPInput, ALPDecision
 
 LaneChangeState = log.LaneChangeState
 LaneChangeDirection = log.LaneChangeDirection
@@ -53,18 +51,14 @@ class DesireHelper:
     self.alc = AutoLaneChangeController(self)
     self.lane_turn_controller = LaneTurnController(self)
     self.lane_turn_direction = TurnDirection.none
-    self.alp = AutoLanePositioningController(self)
-    self.alp_decision = ALPDecision()
-    self.prev_lane_change_state = LaneChangeState.off
 
   @staticmethod
   def get_lane_change_direction(CS):
     return LaneChangeDirection.left if CS.leftBlinker else LaneChangeDirection.right
 
-  def update(self, carstate, lateral_active, lane_change_prob, radarstate=None):
+  def update(self, carstate, lateral_active, lane_change_prob):
     self.alc.update_params()
     self.lane_turn_controller.update_params()
-    self.alp.update_params()
     v_ego = carstate.vEgo
     one_blinker = carstate.leftBlinker != carstate.rightBlinker
     below_lane_change_speed = v_ego < LANE_CHANGE_SPEED_MIN
@@ -149,31 +143,3 @@ class DesireHelper:
         self.desire = log.Desire.none
 
     self.alc.update_state()
-
-    self.update_auto_lane_positioning(carstate, lateral_active, v_ego, radarstate)
-
-  def update_auto_lane_positioning(self, carstate, lateral_active, v_ego, radarstate):
-    # Advisory-only "automatic passing" decision. In ASSIST mode this surfaces a
-    # suggestion; it does not command a lane change here. Start a cooldown whenever
-    # any lane change begins so we don't immediately re-suggest after a maneuver.
-    if self.lane_change_state == LaneChangeState.laneChangeStarting and \
-       self.prev_lane_change_state != LaneChangeState.laneChangeStarting:
-      self.alp.notify_lane_change_started()
-    self.prev_lane_change_state = self.lane_change_state
-
-    lead = radarstate.leadOne if radarstate is not None else None
-    alp_input = ALPInput(
-      lateral_active=lateral_active,
-      v_ego=v_ego,
-      v_cruise_setpoint=float(carstate.cruiseState.speed),
-      lead_status=bool(lead.status) if lead is not None else False,
-      lead_d_rel=float(lead.dRel) if lead is not None else 0.0,
-      lead_v_lead=float(lead.vLead) if lead is not None else 0.0,
-      lead_prob=float(lead.modelProb) if lead is not None else 0.0,
-      left_blindspot=bool(carstate.leftBlindspot),
-      right_blindspot=bool(carstate.rightBlindspot),
-      lane_change_active=self.lane_change_state != LaneChangeState.off,
-      brake_pressed=bool(carstate.brakePressed),
-      steering_pressed=bool(carstate.steeringPressed),
-    )
-    self.alp_decision = self.alp.evaluate(alp_input)

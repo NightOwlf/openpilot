@@ -208,24 +208,6 @@ EVENTS_SP: dict[int, dict[str, Alert | AlertCallbackType]] = {
       Priority.LOW, VisualAlert.none, AudibleAlert.none, 1.),
   },
 
-  # Automatic passing (Auto Lane Positioning) -- ASSIST mode suggestion.
-  # Informational prompt with a soft single chime; the driver executes the pass.
-  EventNameSP.autoLanePositioningPromptLeft: {
-    ET.WARNING: Alert(
-      "Pass Left When Clear",
-      "Slower traffic ahead",
-      AlertStatus.normal, AlertSize.small,
-      Priority.LOW, VisualAlert.none, AudibleAlertSP.promptSingleLow, 1.),
-  },
-
-  EventNameSP.autoLanePositioningPromptRight: {
-    ET.WARNING: Alert(
-      "Pass Right When Clear",
-      "Slower traffic ahead",
-      AlertStatus.normal, AlertSize.small,
-      Priority.LOW, VisualAlert.none, AudibleAlertSP.promptSingleLow, 1.),
-  },
-
   EventNameSP.speedLimitActive: {
     ET.WARNING: Alert(
       "Auto adjusting to speed limit",

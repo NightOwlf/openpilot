@@ -12,7 +12,6 @@ from openpilot.selfdrive.car.cruise import V_CRUISE_MAX
 from openpilot.sunnypilot.selfdrive.controls.lib.dec.dec import DynamicExperimentalController
 from openpilot.sunnypilot.selfdrive.controls.lib.e2e_alerts_helper import E2EAlertsHelper
 from openpilot.sunnypilot.selfdrive.controls.lib.smart_cruise_control.smart_cruise_control import SmartCruiseControl
-from openpilot.sunnypilot.selfdrive.controls.lib.nav.nav_turn_speed import NavTurnSpeedController
 from openpilot.sunnypilot.selfdrive.controls.lib.speed_limit.speed_limit_assist import SpeedLimitAssist
 from openpilot.sunnypilot.selfdrive.controls.lib.speed_limit.speed_limit_resolver import SpeedLimitResolver
 from openpilot.sunnypilot.selfdrive.selfdrived.events import EventsSP
@@ -28,7 +27,6 @@ class LongitudinalPlannerSP:
     self.resolver = SpeedLimitResolver()
     self.dec = DynamicExperimentalController(CP, mpc)
     self.scc = SmartCruiseControl()
-    self.nav_turn = NavTurnSpeedController()
     self.resolver = SpeedLimitResolver()
     self.sla = SpeedLimitAssist(CP, CP_SP)
     self.generation = int(model_bundle.generation) if (model_bundle := get_active_bundle()) else None
@@ -56,9 +54,6 @@ class LongitudinalPlannerSP:
     # Smart Cruise Control
     self.scc.update(sm, long_enabled, long_override, v_ego, a_ego, v_cruise)
 
-    # Navigation turn/exit slowdown
-    self.nav_turn.update(sm, long_enabled, long_override, v_ego, a_ego, v_cruise)
-
     # Speed Limit Resolver
     self.resolver.update(v_ego, sm)
 
@@ -72,7 +67,6 @@ class LongitudinalPlannerSP:
       LongitudinalPlanSource.sccVision: (self.scc.vision.output_v_target, self.scc.vision.output_a_target),
       LongitudinalPlanSource.sccMap: (self.scc.map.output_v_target, self.scc.map.output_a_target),
       LongitudinalPlanSource.speedLimitAssist: (self.sla.output_v_target, self.sla.output_a_target),
-      LongitudinalPlanSource.navTurn: (self.nav_turn.output_v_target, self.nav_turn.output_a_target),
     }
 
     self.source = min(targets, key=lambda k: targets[k][0])
@@ -119,16 +113,6 @@ class LongitudinalPlannerSP:
     sccMap.aTarget = float(self.scc.map.output_a_target)
     sccMap.enabled = self.scc.map.is_enabled
     sccMap.active = self.scc.map.is_active
-
-    # Navigation turn/exit slowdown
-    navTurn = longitudinalPlanSP.navTurn
-    navTurn.state = self.nav_turn.state
-    navTurn.vTarget = float(self.nav_turn.output_v_target)
-    navTurn.aTarget = float(self.nav_turn.output_a_target)
-    navTurn.enabled = self.nav_turn.is_enabled
-    navTurn.active = self.nav_turn.is_active
-    navTurn.maneuverDistance = float(self.nav_turn.maneuver_distance)
-    navTurn.targetSpeed = float(self.nav_turn.target_speed)
 
     # Speed Limit
     speedLimit = longitudinalPlanSP.speedLimit

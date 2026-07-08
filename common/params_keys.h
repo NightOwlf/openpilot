@@ -139,7 +139,6 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"ApiCache_DriveStats", {PERSISTENT, JSON}},
     {"AutoLaneChangeBsmDelay", {PERSISTENT | BACKUP, BOOL, "0"}},
     {"AutoLaneChangeTimer", {PERSISTENT | BACKUP, INT, "0"}},
-    {"AutoLanePositioning", {PERSISTENT | BACKUP, INT, "0"}},  // 0=off, 1=assist, 2=auto
     {"BlinkerLateralReengageDelay", {PERSISTENT | BACKUP, INT, "0"}},  // seconds
     {"BlinkerMinLateralControlSpeed", {PERSISTENT | BACKUP, INT, "20"}},  // MPH or km/h
     {"BlinkerPauseLateralControl", {PERSISTENT | BACKUP, INT, "0"}},
@@ -243,15 +242,6 @@ inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
     {"MapdVersion", {PERSISTENT, STRING}},
     {"MapSpeedLimit", {CLEAR_ON_ONROAD_TRANSITION, FLOAT, "0.0"}},
     {"NextMapSpeedLimit", {CLEAR_ON_ONROAD_TRANSITION, JSON}},
-    // --- Turn-by-turn navigation (sunnypilot navd) ---
-    {"MapboxToken", {PERSISTENT | BACKUP, STRING}},             // user's Mapbox public access token
-    {"NavDestination", {PERSISTENT, STRING}},                   // {"latitude":..,"longitude":..,"place_name":..}
-    {"NavDestinationWaypoints", {PERSISTENT, STRING}},          // optional intermediate waypoints (JSON list)
-    {"NavFavoriteHome", {PERSISTENT | BACKUP, STRING}},         // saved "Home" destination (same JSON shape)
-    {"NavFavoriteWork", {PERSISTENT | BACKUP, STRING}},         // saved "Work" destination (same JSON shape)
-    {"NavRouteGeometry", {CLEAR_ON_MANAGER_START, STRING}},     // cached encoded route geometry for resume
-    {"NavSettingTime24h", {PERSISTENT | BACKUP, BOOL, "0"}},    // ETA display format
-    {"NavSlowdownEnabled", {PERSISTENT | BACKUP, BOOL, "1"}},   // slow for upcoming route turns/exits
     {"Offroad_OSMUpdateRequired", {CLEAR_ON_MANAGER_START, JSON}},
     {"OsmDbUpdatesCheck", {CLEAR_ON_MANAGER_START, BOOL}},  // mapd database update happens with device ON, reset on boot
     {"OSMDownloadBounds", {PERSISTENT, STRING}},
